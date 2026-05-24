@@ -1,0 +1,282 @@
+<!--
+  popup.html — CodeLens extension popup
+  ---------------------------------------------------------------------------
+  Polished dark UI with:
+    - Inline CodeLens logo at the top
+    - Mixed serif title + sans-serif body typography
+    - Animated state pill (new / sending / done / empty / etc.)
+    - Loading spinner during the "sending" state
+    - Subtle hover/press states on the primary button
+  All the logic lives in popup.js. This file is layout only.
+  ---------------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CodeLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --panel: #1a1a1a;
+      --input-bg: #242424;
+      --copper: #C17F3A;
+      --copper-hi: #D89B55;
+      --text: #eaeaea;
+      --muted: #888;
+      --muted-2: #5d5d5d;
+      --border: rgba(255,255,255,0.08);
+      --red: #ff5252;
+      --green: #4caf50;
+      --amber: #ffb74d;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px 14px 20px;
+      background: linear-gradient(180deg, #161616 0%, #0d0d0d 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 8px rgba(193, 127, 58, 0.2));
+    }
+    .brand h1 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--copper);
+      margin: 0;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+    .brand .tagline {
+      font-size: 10.5px;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== BODY ===== */
+    .body { padding: 16px 20px 18px 20px; }
+
+    /* Status pill + spinner */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    #status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--input-bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      letter-spacing: 0.02em;
+      transition: all 0.2s ease;
+    }
+    #status-pill.new {
+      background: linear-gradient(180deg, var(--copper) 0%, var(--copper-hi) 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(193, 127, 58, 0.3);
+    }
+    #status-pill.sending {
+      background: #2a2a2a;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    #status-pill.done {
+      background: rgba(76, 175, 80, 0.15);
+      color: var(--green);
+      border-color: rgba(76, 175, 80, 0.3);
+    }
+    #status-pill.error {
+      background: rgba(255, 82, 82, 0.15);
+      color: var(--red);
+      border-color: rgba(255, 82, 82, 0.3);
+    }
+
+    /* Pulse dot inside pill, shown when status is "new" */
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
+      animation: pulse 1.6s infinite;
+      display: none;
+    }
+    #status-pill.new .pulse-dot { display: inline-block; }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
+      70%  { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+
+    /* Spinner for "sending" state */
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--muted-2);
+      border-top-color: var(--copper);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+    #status-pill.sending + .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Repo line */
+    #repo-line {
+      font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 6px;
+      word-break: break-all;
+      line-height: 1.4;
+      min-height: 17px;
+    }
+    #repo-line .slash { color: var(--muted-2); margin: 0 2px; }
+
+    /* Message */
+    #message {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      min-height: 18px;
+    }
+
+    /* ===== BUTTON ===== */
+    button.primary {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(180deg, var(--copper) 0%, var(--copper-hi) 100%);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(193, 127, 58, 0.25);
+      transition: transform 0.08s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      letter-spacing: 0.01em;
+    }
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(193, 127, 58, 0.35);
+    }
+    button.primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    button.primary:disabled {
+      background: #2a2a2a;
+      color: var(--muted-2);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Result line below button */
+    #result {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 14px;
+      line-height: 1.4;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted-2);
+      text-align: center;
+      letter-spacing: 0.04em;
+      background: #0a0a0a;
+    }
+    .footer span { color: var(--copper); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER WITH LOGO ===== -->
+  <div class="header">
+    <!-- Inline copy of icon.svg so the popup looks branded even before the
+         toolbar PNG icons are generated -->
+    <svg class="logo" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1f1f1f"/>
+          <stop offset="1" stop-color="#0d0d0d"/>
+        </linearGradient>
+        <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#D89B55"/>
+          <stop offset="1" stop-color="#C17F3A"/>
+        </linearGradient>
+      </defs>
+      <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+      <path d="M 92 36 A 36 36 0 1 0 92 92"
+            fill="none" stroke="url(#copper)" stroke-width="14"
+            stroke-linecap="round"/>
+      <circle cx="92" cy="64" r="6" fill="#D89B55"/>
+    </svg>
+    <div class="brand">
+      <h1>CodeLens</h1>
+      <div class="tagline">Built for clarity</div>
+    </div>
+  </div>
+
+  <!-- ===== BODY ===== -->
+  <div class="body">
+    <div class="status-row">
+      <div id="status-pill">
+        <span class="pulse-dot"></span>
+        <span id="status-label">checking…</span>
+      </div>
+      <div class="spinner"></div>
+    </div>
+
+    <div id="repo-line"></div>
+    <div id="message">Looking at the active tab…</div>
+
+    <button id="send-btn" class="primary" disabled>Fetch &amp; Send Code</button>
+
+    <div id="result"></div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="footer">
+    CodeLens <span>·</span> v1.0 <span>·</span> 20-file limit
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

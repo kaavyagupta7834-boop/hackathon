@@ -1,0 +1,28 @@
+<!--
+  icon.svg — master CodeLens icon.
+  This is the source. Use generate-icons.html to convert it
+  into icon-16.png / icon-48.png / icon-128.png for the toolbar.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f1f1f"/>
+      <stop offset="1" stop-color="#0d0d0d"/>
+    </linearGradient>
+    <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D89B55"/>
+      <stop offset="1" stop-color="#C17F3A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark rounded background -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Bold copper "C" (open arc) — the CodeLens monogram -->
+  <path d="M 92 36 A 36 36 0 1 0 92 92"
+        fill="none" stroke="url(#copper)" stroke-width="14"
+        stroke-linecap="round"/>
+
+  <!-- Small accent dot, like a lens reflection -->
+  <circle cx="92" cy="64" r="6" fill="#D89B55"/>
+</svg>
